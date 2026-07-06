@@ -15,6 +15,8 @@ SkillScan is a Django-based platform that analyzes CVs and matches them with job
 - Python
 - Django
 - PostgreSQL
+- spaCy
+- SkillNER
 - Bootstrap
 - HTML/CSS
 
