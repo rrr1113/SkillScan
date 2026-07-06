@@ -8,5 +8,3 @@ def extract_cv(filename):
         text = page.get_text().strip()
         print(text)
 
-
-extract_cv(r'C:\Users\radic\OneDrive\Desktop\CV - Radica Stojkoska.pdf')

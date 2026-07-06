@@ -102,6 +102,7 @@ class Job(models.Model):
     description = models.TextField()
     salary = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
     employment_type = models.CharField(max_length=100, choices=TYPE_CHOICES)
+    num_views = models.IntegerField(default=0)
 
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)

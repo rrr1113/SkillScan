@@ -1,16 +1,32 @@
-import re
+import spacy
+from skillNer.skill_extractor_class import SkillExtractor
+from skillNer.general_params import SKILL_DB
+from spacy.matcher import PhraseMatcher
 
 
-def extract_skills(needed_skills, cv_raw_text):
-    skills_cv = []
-    cv_raw_text = cv_raw_text.lower()
+def extract_skills(cv_raw_text):
+    nlp = spacy.load("en_core_web_lg")
 
-    for skill in needed_skills:
-        if re.search(rf"(?<![a-zA-Z0-9]){re.escape(skill.lower())}(?![a-zA-Z0-9])", cv_raw_text):
-            skills_cv.append(skill)
-            print(skill)
+    skill_extractor = SkillExtractor(
+        nlp,
+        SKILL_DB,
+        PhraseMatcher
+    )
 
-    return skills_cv
+    annotations = skill_extractor.annotate(cv_raw_text)
+    print(annotations)
+    print(annotations["results"]["ngram_scored"][1]["doc_node_value"])
+
+    skills = set()
+
+    for item in annotations["results"]["full_matches"]:
+        skills.add(item["doc_node_value"])
+        print(item["doc_node_value"])
+
+    for item in annotations["results"]["ngram_scored"]:
+        skills.add(item["doc_node_value"])
+        print(item["doc_node_value"])
+
+    return sorted(skills)
 
 
-extract_skills(["a", "B", "d", "C++"], "I have the skill A and C++")
