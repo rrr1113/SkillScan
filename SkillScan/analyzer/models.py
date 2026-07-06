@@ -76,6 +76,7 @@ class CompanyMember(models.Model):
         ('recruiter', 'Recruiter')
     ]
 
+    name_surname = models.CharField(max_length=100)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='members')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='recruiter')
@@ -102,6 +103,7 @@ class Job(models.Model):
     salary = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
     employment_type = models.CharField(max_length=100, choices=TYPE_CHOICES)
 
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
