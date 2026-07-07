@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Q
 
 from .models import *
 
@@ -23,7 +24,7 @@ class CVAdmin(admin.ModelAdmin):
 
         active_application = Application.objects.filter(cv = obj, job__active_until__gte = timezone.now().date())
         if active_application.exists():
-            raise ValidationError("This CV cannot be deleted because it has active job applications.")
+            raise False
 
         return request.user == obj.applicant or request.user.is_superuser
 
@@ -34,9 +35,40 @@ class CVAdmin(admin.ModelAdmin):
 
         active_application = Application.objects.filter(cv = obj, job__active_until__gte = timezone.now().date())
         if active_application.exists():
-            raise ValidationError("This CV cannot be changed because it has active job applications.")
-
+            return False
         return request.user == obj.applicant
+
+
+class CompanyMemberAdmin(admin.ModelAdmin):
+    model = CompanyMember
+    extra = 0
+
+    list_display = ('name_surname',)
+    search_fields = ('name_surname', 'role')
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            is_owner = CompanyMember.objects.filter(user=request.user, role='owner', company=obj.company).exists()
+            if not is_owner and not request.user.is_superuser:
+                raise PermissionDenied("Only company owners can add members.")
+
+        return super().save_model(request, obj, form, change)
+
+    def has_add_permission(self, request):
+        is_owner = CompanyMember.objects.filter(user=request.user, role='owner').exists()
+        return request.user.is_superuser or is_owner
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is None:
+            return False
+
+        owners = CompanyMember.objects.filter(user=request.user, role='owner', company=obj.company).count()
+        if owners == 1:
+            return False
+
+        return request.user == obj.user or request.user.is_superuser
+
+
 
 
 
@@ -58,35 +90,14 @@ class CompanyAdmin(admin.ModelAdmin):
             return True
         return False
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
 
+        is_company_member = Company.objects.filter(members=request.user).exists()
+        if is_company_member:
+            return qs.filter(members__user=request.user)
 
-class CompanyMemberAdmin(admin.ModelAdmin):
-    list_display = ('name_surname',)
-    search_fields = ('name_surname' ,'role')
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            is_owner = CompanyMember.objects.filter(user=request.user, role='owner', company=obj.company).exists()
-            if not is_owner and not request.user.is_superuser:
-                raise PermissionDenied("Only company owners can add members.")
-
-        return super().save_model(request, obj, form, change)
-
-    def has_add_permission(self, request):
-        is_owner = CompanyMember.objects.filter(user = request.user, role = 'owner').exists()
-        return request.user.is_superuser or is_owner
-
-    def has_delete_permission(self, request, obj=None):
-        if obj is None:
-            return False
-
-        owners = CompanyMember.objects.filter(user = request.user, role = 'owner', company = obj.company).count()
-        if owners == 1:
-            return False
-
-        return request.user == obj.user or request.user.is_superuser
-
-
+        return qs
 
 
 
@@ -97,13 +108,16 @@ class SkillJobInline(admin.TabularInline):
     model = SkillJob
     extra = 1
 
+class JobLocationInline(admin.TabularInline):
+    model = JobLocation
+    extra = 0
 
 
 class JobAdmin(admin.ModelAdmin):
     exclude = ('created_by',)
     list_display = ('position', 'industry', 'active_until','employment_type')
     search_fields = ('company', 'industry', 'position', 'employment_type')
-    inlines = (SkillJobInline, )
+    inlines = (SkillJobInline, JobLocationInline)
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -143,9 +157,9 @@ class JobAdmin(admin.ModelAdmin):
 
         company_member = CompanyMember.objects.filter(user=request.user).first()
         if not company_member:
-            return qs.none()
+            return qs.filter(company__members__user=request.user)
 
-        return qs.filter(company = company_member.company)
+        return qs
 
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -155,15 +169,31 @@ class JobAdmin(admin.ModelAdmin):
             else:
                 kwargs["queryset"] = Company.objects.filter(members__user=request.user)
 
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class ApplicationAdmin(admin.ModelAdmin):
+    list_display = ('job', 'status', 'updated_at')
+    search_fields = ('status', 'job')
+
     def save_model(self, request, obj, form, change):
         if not change:
             if obj.job.active_until.date() < timezone.now().date():
                 raise PermissionDenied("This job post is expired.")
 
         super().save_model(request, obj, form, change)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        if request.user.is_superuser:
+            return qs
+
+        is_company_member = CompanyMember.objects.filter(user=request.user).exists()
+        if is_company_member:
+            return qs.filter(job__company__members__user = request.user).distinct()
+
+        return qs.filter(cv__applicant = request.user)
 
 
 
@@ -172,11 +202,46 @@ class SkillMatchAdmin(admin.ModelAdmin):
     exclude = ('triggered_by',)
     search_fields = ('percentage', 'application')
 
-
     def save_model(self, request, obj, form, change):
         if not change:
+            existing = SkillMatch.objects.filter(
+                application=obj.application,
+                triggered_by=request.user
+            ).first()
+
+            if existing:
+                obj.pk = existing.pk
+
             obj.triggered_by = request.user
+
         return super().save_model(request, obj, form, change)
+
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "application":
+            if request.user.is_superuser:
+                kwargs["queryset"] = Application.objects.all()
+            else:
+                kwargs["queryset"] = Application.objects.filter(
+                    Q(job__company__members__user=request.user)
+                ).distinct()
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        if request.user.is_superuser:
+            return qs
+
+        is_company_member = CompanyMember.objects.filter(user=request.user).exists()
+        if is_company_member:
+            return qs.filter(application__job__company__members__user = request.user).distinct()
+
+        return qs.filter(application__cv__applicant = request.user)
+
+
 
 
 
@@ -188,6 +253,5 @@ admin.site.register(Location)
 admin.site.register(Company, CompanyAdmin)
 admin.site.register(CompanyMember, CompanyMemberAdmin)
 admin.site.register(Job, JobAdmin)
-admin.site.register(JobLocation)
 admin.site.register(Application, ApplicationAdmin)
 admin.site.register(SkillMatch, SkillMatchAdmin)

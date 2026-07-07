@@ -169,7 +169,7 @@ class SkillMatch(models.Model):
     missing_skills = models.ManyToManyField(Skill, related_name='missing_in', blank=True)
 
     analyzed_at = models.DateTimeField(auto_now=True)
-
+    outdated = models.BooleanField(default=False)
     triggered_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
