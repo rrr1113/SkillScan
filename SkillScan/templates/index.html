@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkillScan</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="{% static 'bootstrap-4.0.0-dist/css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg pl-5 pr-5">
+    <a class="navbar-brand" href="#">SkillScan</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Features</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Pricing</a>
+            </li>
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link border rounded-pill px-4 py-2 login" href="">{{ user.username }}</a> <!-- TODO -->
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link border rounded-pill px-4 py-2 login" href=""> Log in</a><!-- TODO -->
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+
+<div id="banner" style="height: 500px" class="justify-content-center">
+    <img src="{% static '/images/banner.png' %}" alt="banner image" style="object-fit: cover"/>
+    <div class="overlay d-flex flex-column justify-content-center align-items-center">
+        <h1 class="text-center font-weight-bold">Scan, Match, Succeed!</h1>
+        <h5 class="text-center font-weight-normal" style="width: 45%">Turn your skills into Opportunities. Upload your
+            CV, discover your strengths, and find the right job</h5>
+    </div>
+</div>
+
+
+<div class="container p-5">
+    <div class="d-flex flex-column flex-md-row gap-3">
+        <input class="form-control search-filed m-2" type="search" placeholder="Position" aria-label="Position">
+        <input class="form-control search-filed m-2" type="search" placeholder="Location" aria-label="Location">
+        <div class="dropdown m-2">
+            <button class="btn dropdown-style dropdown-toggle" type="button" id="dropdownMenuButton"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Work Type
+            </button>
+
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item" href="#">Full Time</a>
+                <a class="dropdown-item" href="#">Part Time</a>
+                <a class="dropdown-item" href="#">Internship</a>
+                <a class="dropdown-item" href="#">Remote</a>
+            </div>
+        </div>
+        <button class="btn search-button m-2" type="submit">Search</button>
+    </div>
+</div>
+
+
+<div class="container">
+    <h2 class="text-center m-5"><span
+            class="border-bottom p-2 font-weight-normal text-capitalize">Active job positions</span></h2>
+
+    <div class="row">
+        {% for job in all_jobs %}
+        <div class="col-md-4">
+            <div class="card mb-5 rounded-4 overflow-hidden">
+                <img class="card-img-top" src="{{ job.job.company.logo.url }}" alt="Card image cap"
+                     style="justify-content: center">
+                <div class="card-body ">
+                    <h5 class="card-title font-weight-bold">{{ job.job.position }}</h5>
+                    <p class="card-text"><span class="font-weight-bold">Locations:</span>
+                        {% for location in job.locations %}
+                        <span>{{ location.location.city }},</span>
+                        {% endfor %}
+                    </p>
+
+                    {% if job.job.salary %}
+                    <p class="card-text"><span class="font-weight-bold">Salary:</span> {{ job.job.salary }}</p>
+                    {% endif %}
+
+                    <p class="card-text" id="active-util"><span class="font-weight-bold">Active until:</span> {{
+                        job.job.active_until }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>

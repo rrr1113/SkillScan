@@ -13,7 +13,7 @@ class Skill(models.Model):
         return self.name
 
 class CV(models.Model):
-    file = models.FileField(upload_to='cv', validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx'])])
+    file = models.FileField(upload_to='cv', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     name_surname = models.CharField(max_length=100)
     raw_text = models.TextField(null=True, blank=True)
     email = models.EmailField()
@@ -58,7 +58,7 @@ class Location(models.Model):
 
 class Company(models.Model):
     name = models.CharField(max_length=100)
-    logo = models.ImageField(upload_to='logo', null=True, blank=True, validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])])
+    logo = models.ImageField(upload_to='logo', validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])])
     description = models.TextField()
 
     created_at = models.DateTimeField(default=timezone.now)

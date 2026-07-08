@@ -1,0 +1,83 @@
+.navbar {
+    background-color: #003D58;
+}
+
+.navbar a[href] {
+    color: #EAD7EF;
+}
+
+.navbar-brand {
+    font-family: 'Aboreto', sans-serif;
+}
+
+#active-util{
+    color: #a82da5;
+}
+
+#banner{
+    position: relative;
+    height: 500px;
+}
+#banner img {
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+}
+#banner .overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 33, 47, 0.75);
+    color: #ffffff;
+    justify-content: center;
+}
+#banner h1 {
+    font-size: 5rem;
+}
+
+#banner h5 {
+    width: 45%;
+    font-size: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    #banner h1 {
+        font-size: 3.5rem;
+    }
+
+    #banner h5 {
+        width: 80%;
+        font-size: 1rem;
+    }
+}
+.search-filed {
+    border-color: #a82da5;
+    border-radius: 50px;
+}
+.search-button{
+    border-color: #a82da5;
+    border-radius: 50px;
+    background-color: #a82da5;
+    color: #EAD7EF;
+}
+
+.card-title {
+    color: #003D58;
+}
+
+.card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+.login {
+    border: 1px solid #000;
+    border-radius: 999px !important;
+    padding: 8px 20px !important;
+    display: inline-block;
+}
+
+.dropdown-style {
+    border-color: #a82da5;
+    border-radius: 50px;
+    color: #a82da5;
+    background-color: white;
+}

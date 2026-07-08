@@ -9,12 +9,13 @@ from .models import *
 
 class CVAdmin(admin.ModelAdmin):
     list_display = ('name_surname', 'email', 'phone')
-    exclude = ('applicant',)
+    exclude = ('applicant', 'created_at', 'raw_text')
     search_fields = ('name_surname', 'email', 'phone')
 
     def save_model(self, request, obj, form, change):
         if not change:
             obj.applicant = request.user
+
         return super().save_model(request, obj, form, change)
 
 
@@ -68,12 +69,23 @@ class CompanyMemberAdmin(admin.ModelAdmin):
 
         return request.user == obj.user or request.user.is_superuser
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "user":
+            if request.user.is_superuser:
+                kwargs["queryset"] = User.objects.all()
+            else:
+                company = CompanyMember.objects.get(user=request.user,role="owner").company
+                kwargs["queryset"] = User.objects.exclude(companymember__company=company)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 
 
 
 
 class CompanyAdmin(admin.ModelAdmin):
     search_fields = ('name',)
+    exclude = ('created_at',)
 
     def has_add_permission(self, request):
         return request.user.is_superuser
@@ -93,11 +105,20 @@ class CompanyAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
 
-        is_company_member = Company.objects.filter(members=request.user).exists()
+        is_company_member = CompanyMember.objects.filter(user=request.user).exists()
         if is_company_member:
-            return qs.filter(members__user=request.user)
+            return qs.filter(members__user=request.user).distinct()
 
         return qs
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+
+        if obj is None:
+            return True
+
+        return CompanyMember.objects.filter(user=request.user, company=obj).exists()
 
 
 
@@ -114,7 +135,7 @@ class JobLocationInline(admin.TabularInline):
 
 
 class JobAdmin(admin.ModelAdmin):
-    exclude = ('created_by',)
+    exclude = ('created_by', 'num_views', 'created_at',)
     list_display = ('position', 'industry', 'active_until','employment_type')
     search_fields = ('company', 'industry', 'position', 'employment_type')
     inlines = (SkillJobInline, JobLocationInline)
@@ -175,10 +196,11 @@ class JobAdmin(admin.ModelAdmin):
 class ApplicationAdmin(admin.ModelAdmin):
     list_display = ('job', 'status', 'updated_at')
     search_fields = ('status', 'job')
+    exclude = ('status', 'created_at')
 
     def save_model(self, request, obj, form, change):
         if not change:
-            if obj.job.active_until.date() < timezone.now().date():
+            if obj.job.active_until < timezone.now().date():
                 raise PermissionDenied("This job post is expired.")
 
         super().save_model(request, obj, form, change)
@@ -246,10 +268,26 @@ class SkillMatchAdmin(admin.ModelAdmin):
 
 
 
+
+class LocationAdmin(admin.ModelAdmin):
+    def has_view_permission(self, request, obj = None):
+        return request.user.is_superuser
+
+    def has_add_permission(self, request, obj = None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj = None):
+        return request.user.is_superuser
+
+
+
+
+
+
 admin.site.register(Skill)
 admin.site.register(CV, CVAdmin)
 admin.site.register(SkillCv)
-admin.site.register(Location)
+admin.site.register(Location, LocationAdmin)
 admin.site.register(Company, CompanyAdmin)
 admin.site.register(CompanyMember, CompanyMemberAdmin)
 admin.site.register(Job, JobAdmin)
