@@ -25,4 +25,7 @@ import analyzer.views as analyzer_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', analyzer_views.index, name='index'),
+    path('job_details/<id>', analyzer_views.job_details, name='job_details'),
+    path('company_jobs_overview/', analyzer_views.company_jobs_overview, name='company_jobs_overview'),
+    path('user_profile/', analyzer_views.user_profile, name='user_profile'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

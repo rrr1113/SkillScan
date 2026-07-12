@@ -1,0 +1,235 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Details</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="{% static 'bootstrap-4.0.0-dist/css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+
+<nav class="navbar navbar-expand-lg pl-5 pr-5">
+    <a class="navbar-brand" href="#">SkillScan</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Home</a>
+            </li>
+
+            {% if user.is_authenticated %}
+            {% if is_company_member %}
+            <li class="nav-item">
+                <a class="nav-link px-4 py-2" href="{% url 'company_jobs_overview' %}">Jobs Overview</a>
+            </li>
+            {% endif %}
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link px-4 py-2" href="{% url 'company_jobs_overview' %}">Jobs</a>
+            </li>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link border rounded-pill px-4 py-2 login" href="">{{ user.username }}</a> <!-- TODO -->
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link border rounded-pill px-4 py-2 login" href=""> Log in</a><!-- TODO -->
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container pt-5 pl-5">
+    <a class="btn btn-outline-secondary" href="{% url 'index' %}" type="submit">Go back</a>
+</div>
+
+
+<div class="container p-5">
+    <div class="row">
+        <div class="col-md-6">
+            <img src="{{ job.company.logo.url }}"/>
+            <div>
+                <ul class="list-unstyled">
+                    <li class="pt-5">
+                        <p><span class="font-weight-bold card-title">Needed skills for the job:</span></p>
+                        <table class="table" style="width: 50%">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Skill</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for skill in skills %}
+                            <tr>
+                                <th scope="row">1</th>
+                                <td>{{ skill.skill.name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-unstyled">
+                <li class="mb-5">
+                    <h2><span class="card-title font-weight-bold">{{ job.position }} ({{ job.industry }})</span></h2>
+                </li>
+                <li class="border-bottom p-2">
+                    <p class="active-util"><span class="font-weight-bold card-title active-util">Active until: </span>
+                        {{ job.active_until }}</p>
+                </li>
+                <li class="border-bottom p-2">
+                    <p><span class="font-weight-bold card-title">Company:</span> {{ job.company.name }}</p>
+                </li>
+                <li class="border-bottom p-2">
+                    <p><span class="font-weight-bold card-title">Work Type:</span> {{ job.employment_type }}</p>
+                </li>
+                {% if job.salary %}
+                <li class="border-bottom p-2">
+                    <p><span class="font-weight-bold card-title">Salary:</span> {{ job.salary }}</p>
+                </li>
+                {% endif %}
+
+                <li class="border-bottom p-2">
+                    <p><span class="font-weight-bold card-title">Locations:</span></p>
+                    <ul>
+                        {% for location in locations %}
+                        <li>{{ location.location.city }} ( {{ location.location.country }} )</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li class="p-2 mt-3">
+                    <p><span class="font-weight-bold card-title">Description:</span> {{ job.description }}</p>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% if user.is_authenticated %}
+{% if is_company_member %}
+
+<div class="container border-bottom"></div>
+<div class="container">
+    <h2 class="text-center p-5 card-title">Applications:</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name & Surname:</th>
+                <th scope="col" class="d-none d-md-table-cell">E-mail:</th>
+                <th scope="col" class="d-none d-md-table-cell">Phone number:</th>
+                <th scope="col">CV:</th>
+                <th scope="col">SkillScan</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for application in applications %}
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ application.cv.name_surname }}</td>
+                <td class="d-none d-md-table-cell">{{ application.cv.email }}</td>
+                <td class="d-none d-md-table-cell">{{ application.cv.phone }}</td>
+                <td>
+                    <a href="{{ application.cv.file.url }}" class="btn dropdown-style" download>Download CV</a>
+                </td>
+                <td>
+                    <button class="btn search-button">Match skills</button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container border-bottom p-5"></div>
+
+
+
+<div class="container mt-5 mb-5 p-5 border rounded-4 overflow-hidden" style="width: 50%; border-radius: 1rem; overflow: hidden; border: 1px solid #a82da5 !important;">
+    <h2 class="text-center pb-5 card-title">Edit this job:</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ edit_from.as_p }}
+        <div class="d-flex justify-content-end pt-2">
+            <button class="btn search-button">Save edits</button>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="container p-5">
+    <div class="container border rounded-4 overflow-hidden"
+         style="height: 300px; border-radius: 1rem; overflow: hidden; border: 1px solid #a82da5 !important;">
+        <div class="row h-100 justify-content-center align-items-center">
+
+            <div class="col-5 d-none d-md-block h-100">
+                <img src="{% static '/images/businessman.jpg' %}" alt="" class="img-fluid"
+                     style="object-fit: cover; width: 100%; height: 100%;">
+            </div>
+
+            <div class="col-12 col-md-7 p-4 pr-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Apply for this job here:</h5>
+                    <button class="btn dropdown-style">Apply now</button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Match your skills from your CV to this job:</h5>
+                    <button class="btn search-button">Match skills</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+
+
+<div class="navbar navbar-expand-lg pl-5 pr-5">
+    <a class="navbar-brand" href="#">SkillScan</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end">
+        <ul class="navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Home</a>
+            </li>
+
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link border rounded-pill px-4 py-2 login" href="">{{ user.username }}</a> <!-- TODO -->
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link border rounded-pill px-4 py-2 login" href=""> Log in</a><!-- TODO -->
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

@@ -3,13 +3,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SkillScan</title>
+    <title>Company Jobs Overview</title>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="{% static 'bootstrap-4.0.0-dist/css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
-
 <body>
 
 <nav class="navbar navbar-expand-lg pl-5 pr-5">
@@ -38,7 +37,7 @@
 
             {% if user.is_authenticated %}
             <li class="nav-item">
-                <a class="nav-link border rounded-pill px-4 py-2 login" href="{% url 'user_profile' %}">{{ user.username }}</a> <!-- TODO -->
+                <a class="nav-link border rounded-pill px-4 py-2 login" href="">{{ user.username }}</a> <!-- TODO -->
             </li>
             {% else %}
             <li class="nav-item">
@@ -48,17 +47,6 @@
         </ul>
     </div>
 </nav>
-
-
-<div id="banner" style="height: 500px" class="justify-content-center">
-    <img src="{% static '/images/banner.png' %}" alt="banner image" style="object-fit: cover"/>
-    <div class="overlay d-flex flex-column justify-content-center align-items-center">
-        <h1 class="text-center font-weight-bold">Scan, Match, Succeed!</h1>
-        <h5 class="text-center font-weight-normal" style="width: 45%">Turn your skills into Opportunities. Upload your
-            CV, discover your strengths, and find the right job</h5>
-    </div>
-</div>
-
 
 <form method="get" action="">
     <div class="container p-5">
@@ -102,7 +90,6 @@
 
                         </div>
 
-
                         <p class="card-text">
                             <span class="font-weight-bold">Locations:</span>
                             {% for location in job.locations %}
@@ -127,33 +114,6 @@
         {% endfor %}
     </div>
 </div>
-
-
-<div class="navbar navbar-expand-lg pl-5 pr-5">
-    <a class="navbar-brand" href="#">SkillScan</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-end">
-        <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">Home</a>
-            </li>
-
-            {% if user.is_authenticated %}
-            <li class="nav-item">
-                <a class="nav-link border rounded-pill px-4 py-2 login" href="">{{ user.username }}</a> <!-- TODO -->
-            </li>
-            {% else %}
-            <li class="nav-item">
-                <a class="nav-link border rounded-pill px-4 py-2 login" href=""> Log in</a><!-- TODO -->
-            </li>
-            {% endif %}
-        </ul>
-    </div>
-</div>
-
 
 </body>
 </html>

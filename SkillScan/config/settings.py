@@ -28,7 +28,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'analyzer'
+    'analyzer',
+    'accounts'
 ]
 
 MIDDLEWARE = [
@@ -84,6 +84,9 @@ DATABASES = {
         'PORT': config("DB_PORT"),
     }
 }
+
+
+AUTH_USER_MODEL = 'accounts.User'
 
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" #for real emails
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
