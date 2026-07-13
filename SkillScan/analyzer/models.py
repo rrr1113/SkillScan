@@ -85,6 +85,10 @@ class CompanyMember(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name} ({self.company.name})"
+
     class Meta:
         unique_together = ('company', 'user', 'location', 'created_at')
 
@@ -133,6 +137,7 @@ class Application(models.Model):
         ('submitted', 'Submitted'),
         ('under_review', 'Under Review'),
         ('rejected', 'Rejected'),
+        ('accepted', 'Accepted')
     ]
 
     cv = models.ForeignKey(CV, on_delete=models.CASCADE)

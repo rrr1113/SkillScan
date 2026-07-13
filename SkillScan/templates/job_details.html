@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="{% static 'bootstrap-4.0.0-dist/css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
-<body>
-
+<body class="d-flex flex-column min-vh-100">
+<main class="flex-fill">
 
 <nav class="navbar navbar-expand-lg pl-5 pr-5">
     <a class="navbar-brand" href="{% url 'index' %}">SkillScan</a>
@@ -38,7 +38,8 @@
 
             {% if user.is_authenticated %}
             <li class="nav-item">
-                <a class="nav-link border rounded-pill px-4 py-2 login" href="{% url 'user_profile' %}">{{ user.username }}</a>
+                <a class="nav-link border rounded-pill px-4 py-2 login" href="{% url 'user_profile' %}">
+                    {{ user.username }}</a>
             </li>
             {% else %}
             <li class="nav-item">
@@ -49,12 +50,12 @@
     </div>
 </nav>
 
-<div class="container pt-5 pl-5">
-    <a class="btn btn-outline-secondary" href="{% url 'index' %}" type="submit">Go back</a>
+<div class="container pt-5">
+    <a class="btn btn-outline-secondary" href="{% url 'index' %}" type="submit">Go Home</a>
 </div>
 
 
-<div class="container p-5">
+<div class="container pt-5">
     <div class="row">
         <div class="col-md-6">
             <img src="{{ job.company.logo.url }}"/>
@@ -87,38 +88,55 @@
                     <h2><span class="card-title font-weight-bold">{{ job.position }} ({{ job.industry }})</span></h2>
                 </li>
                 <li class="border-bottom p-2">
-                    <p class="active-util"><span class="font-weight-bold card-title active-util">Active until: </span>
-                        {{ job.active_until }}</p>
+                    <div class="row">
+                        <div class="active-util col-4 font-weight-bold">Active until:</div>
+                        <div class="active-util col-8">{{ job.active_until }}</div>
+                    </div>
                 </li>
                 <li class="border-bottom p-2">
-                    <p><span class="font-weight-bold card-title">Company:</span> {{ job.company.name }}</p>
+                    <div class="row">
+                        <div class="col-4 font-weight-bold card-title">Company:</div>
+                        <div class="col-8">{{ job.company.name }}</div>
+                    </div>
                 </li>
                 <li class="border-bottom p-2">
-                    <p><span class="font-weight-bold card-title">Work Type:</span> {{ job.employment_type }}</p>
+                    <div class="row">
+                        <div class="col-4 font-weight-bold card-title">Work Type:</div>
+                        <div class="col-8">{{ job.employment_type }}</div>
+                    </div>
                 </li>
                 {% if job.salary %}
                 <li class="border-bottom p-2">
-                    <p><span class="font-weight-bold card-title">Salary:</span> {{ job.salary }}</p>
+                    <div class="row">
+                        <div class="col-4 font-weight-bold card-title">Salary:</div>
+                        <div class="col-8">{{ job.salary }}</div>
+                    </div>
                 </li>
                 {% endif %}
 
                 <li class="border-bottom p-2">
-                    <p><span class="font-weight-bold card-title">Locations:</span></p>
-                    <ul>
-                        {% for location in locations %}
-                        <li>{{ location.location.city }} ( {{ location.location.country }} )</li>
-                        {% endfor %}
-                    </ul>
+                    <div class="row">
+                        <div class="col-4 font-weight-bold card-title">Locations:</div>
+                        <div class="col-8" style="padding-left: -10px ">
+                            <ul class="list-unstyled">
+                                {% for location in locations %}
+                                <li>{{ location.location.city }} ( {{ location.location.country }} )</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
                 </li>
                 <li class="p-2 mt-3">
-                    <p><span class="font-weight-bold card-title">Description:</span> {{ job.description }}</p>
+                    <div class="row">
+                        <div class="col-4 font-weight-bold card-title">Description:</div>
+                        <div class="col-8">{{ job.description }}</div>
+                    </div>
                 </li>
             </ul>
         </div>
     </div>
 </div>
-
-
 
 
 {% if user.is_authenticated %}
@@ -163,8 +181,8 @@
 <div class="container border-bottom p-5"></div>
 
 
-
-<div class="container mt-5 mb-5 p-5 border rounded-4 overflow-hidden" style="width: 50%; border-radius: 1rem; overflow: hidden; border: 1px solid #a82da5 !important;">
+<div class="container mt-5 mb-5 p-5 border rounded-4 overflow-hidden"
+     style="width: 50%; border-radius: 1rem; overflow: hidden; border: 1px solid #a82da5 !important;">
     <h2 class="text-center pb-5 card-title">Edit this job:</h2>
 
     <form method="post" enctype="multipart/form-data">
@@ -203,33 +221,40 @@
 </div>
 {% endif %}
 {% endif %}
+</main>
 
 
 
-<div class="navbar navbar-expand-lg pl-5 pr-5">
-    <a class="navbar-brand" href="#">SkillScan</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-end">
-        <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">Home</a>
-            </li>
+<footer class="mt-5 py-4" style="background-color: #003d58; color: #EAD7EF;">
+    <div class="container">
+        <div class="row align-items-center">
 
-            {% if user.is_authenticated %}
-            <li class="nav-item">
-                <a class="nav-link border rounded-pill px-4 py-2 login" href="">{{ user.username }}</a> <!-- TODO -->
-            </li>
-            {% else %}
-            <li class="nav-item">
-                <a class="nav-link border rounded-pill px-4 py-2 login" href=""> Log in</a><!-- TODO -->
-            </li>
-            {% endif %}
-        </ul>
+            <div class="col-md-4 text-center text-md-left mb-3 mb-md-0">
+                <h4 class="mb-1">SkillScan</h4>
+                <p class="mb-0">Scan, Match, Succeed.</p>
+            </div>
+
+            <div class="col-md-4 text-center mb-3 mb-md-0">
+                <a href="{% url 'index' %}" class="mx-2">Home</a>
+
+                {% if user.is_authenticated %}
+                    {% if is_company_member %}
+                        <a href="{% url 'company_jobs_overview' %}" class="mx-2">My Jobs</a>
+                    {% else %}
+                        <a href="{% url 'user_applications_overview' %}" class="mx-2">My Applications</a>
+                    {% endif %}
+
+                    <a href="{% url 'user_profile' %}" class="mx-2">Profile</a>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4 text-center text-md-right">
+                <small>&copy; {% now "Y" %} SkillScan. All rights reserved.</small>
+            </div>
+
+        </div>
     </div>
-</div>
+</footer>
 
 </body>
 </html>

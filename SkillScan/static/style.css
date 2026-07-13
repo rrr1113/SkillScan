@@ -111,3 +111,35 @@ a:hover {
     color: white;
 }
 
+footer a[href] {
+    color: #EAD7EF;
+}
+
+footer a:hover {
+    color: white;
+    opacity: .8;
+    text-decoration: none;
+}
+
+.navbar a[href]:hover {
+    color: white;
+    opacity: .8;
+    text-decoration: none;
+}
+
+
+
+
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}

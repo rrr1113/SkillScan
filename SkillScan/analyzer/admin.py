@@ -70,13 +70,24 @@ class CompanyMemberAdmin(admin.ModelAdmin):
 
         return request.user == obj.user or request.user.is_superuser
 
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return False
+
+        owners = CompanyMember.objects.filter(user=request.user, role='owner', company=obj.company).count()
+        if owners == 1:
+            return False
+
+        return request.user == obj.user or request.user.is_superuser
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "user":
             if request.user.is_superuser:
                 kwargs["queryset"] = User.objects.all()
             else:
-                company = CompanyMember.objects.get(user=request.user,role="owner").company
-                kwargs["queryset"] = User.objects.exclude(companymember__company=company)
+                member = CompanyMember.objects.filter(user=request.user, role="owner").first()
+                if member:
+                    kwargs["queryset"] = User.objects.exclude(companymember__company=member.company)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -216,8 +227,15 @@ class ApplicationAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            if obj.job.active_until < timezone.now().date():
-                raise PermissionDenied("This job post is expired.")
+            obj.cv.user = request.user
+
+        member = CompanyMember.objects.filter(user=request.user).first()
+
+        if change and member and obj.job.company == member.company:
+            old = Application.objects.get(pk=obj.pk)
+            old.status = obj.status
+            old.save(update_fields=["status"])
+            return
 
         super().save_model(request, obj, form, change)
 
@@ -232,6 +250,57 @@ class ApplicationAdmin(admin.ModelAdmin):
             return qs.filter(job__company__members__user = request.user).distinct()
 
         return qs.filter(cv__user = request.user)
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+
+        member = CompanyMember.objects.filter(user=request.user).first()
+
+        if obj is None:
+            return True
+
+        return (obj.cv.user == request.user or
+                (member and obj.job.company == member.company))
+
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+
+        if obj is None:
+            return True
+
+        member = CompanyMember.objects.filter(user=request.user).first()
+
+        return (obj.cv.user == request.user or
+                (member and obj.job.company == member.company))
+
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+
+        if obj is None:
+            return False
+
+        return obj.cv.user == request.user
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+
+        if request.user.is_superuser or obj is None:
+            return readonly
+
+        member = CompanyMember.objects.filter(user=request.user).first()
+        if member and obj.job.company == member.company:
+            return readonly + ["job", "cv",]
+
+        return readonly + ["status"]
+
+
+
+
 
 
 
