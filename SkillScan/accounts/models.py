@@ -8,3 +8,4 @@ class User(AbstractUser):
         default='profile_photos/default.jpg',
         blank=True
     )
+    phone_number = models.CharField(null=True, blank=True, max_length=20)

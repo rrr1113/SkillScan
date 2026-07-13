@@ -16,17 +16,15 @@ class Skill(models.Model):
 
 class CV(models.Model):
     file = models.FileField(upload_to='cv', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
-    name_surname = models.CharField(max_length=100)
     raw_text = models.TextField(null=True, blank=True)
     email = models.EmailField()
-    phone = models.CharField(max_length=100, null=True, blank=True)
-    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs')
 
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name_surname
+        return self.user.first_name + ' ' + self.user.last_name
 
 
 
@@ -35,7 +33,7 @@ class SkillCv(models.Model):
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='cvs')
 
     def __str__(self):
-        return f"{self.cv.name_surname} ({self.skill.name})"
+        return f"{self.cv.user.first_name} {self.cv.user.last_name} ({self.skill.name})"
 
     class Meta:
         unique_together = ('cv', 'skill')
@@ -78,13 +76,17 @@ class CompanyMember(models.Model):
         ('recruiter', 'Recruiter')
     ]
 
-    name_surname = models.CharField(max_length=100)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='members')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='recruiter')
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    still_member = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('company', 'user')
+        unique_together = ('company', 'user', 'location', 'created_at')
 
 
 
@@ -144,7 +146,7 @@ class Application(models.Model):
         unique_together = ('job', 'cv')
 
     def __str__(self):
-        return f"{self.cv.name_surname} - {self.job.position} ({self.status})"
+        return f"{self.cv.user.first_name} {self.cv.user.last_name} - {self.job.position} ({self.status})"
 
 
 # ANALYZER ------------------------------------------------
@@ -175,4 +177,4 @@ class SkillMatch(models.Model):
     triggered_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.application.job.position} ({self.application.job.company}) - {self.application.cv.name_surname} - {self.percentage}%"
+        return f"{self.application.job.position} ({self.application.job.company}) - {self.application.cv.user.first_name} {self.application.cv.user.last_name} - {self.percentage}%"

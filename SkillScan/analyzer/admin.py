@@ -1,20 +1,22 @@
 from django.contrib import admin
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 
 from .models import *
+from accounts.models import User
+
 
 # Register your models here.
 
 
 class CVAdmin(admin.ModelAdmin):
-    list_display = ('name_surname', 'email', 'phone')
-    exclude = ('applicant', 'created_at', 'raw_text')
-    search_fields = ('name_surname', 'email', 'phone')
+    list_display = ('email',)
+    exclude = ('user', 'created_at', 'raw_text')
+    search_fields = ('email', )
 
     def save_model(self, request, obj, form, change):
         if not change:
-            obj.applicant = request.user
+            obj.user = request.user
 
         return super().save_model(request, obj, form, change)
 
@@ -27,7 +29,7 @@ class CVAdmin(admin.ModelAdmin):
         if active_application.exists():
             raise False
 
-        return request.user == obj.applicant or request.user.is_superuser
+        return request.user == obj.user or request.user.is_superuser
 
 
     def has_change_permission(self, request, obj=None):
@@ -37,15 +39,14 @@ class CVAdmin(admin.ModelAdmin):
         active_application = Application.objects.filter(cv = obj, job__active_until__gte = timezone.now().date())
         if active_application.exists():
             return False
-        return request.user == obj.applicant
+        return request.user == obj.user
 
 
 class CompanyMemberAdmin(admin.ModelAdmin):
     model = CompanyMember
     extra = 0
 
-    list_display = ('name_surname',)
-    search_fields = ('name_surname', 'role')
+    search_fields = ('role',)
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -131,7 +132,18 @@ class SkillJobInline(admin.TabularInline):
 
 class JobLocationInline(admin.TabularInline):
     model = JobLocation
-    extra = 0
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "location" and not request.user.is_superuser:
+            member = CompanyMember.objects.filter(user=request.user).first()
+
+            if member:
+                if member.role == 'owner':
+                    kwargs["queryset"] = Location.objects.all()
+                else:
+                    kwargs["queryset"] = Location.objects.filter(id=member.location_id)
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class JobAdmin(admin.ModelAdmin):
@@ -152,12 +164,17 @@ class JobAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj = None):
         if obj is None:
-            return False
+            return True
 
         if request.user.is_superuser:
             return True
 
-        return request.user == obj.created_by or obj.company.members.filter(user=request.user).exists()
+        member = CompanyMember.objects.filter(user=request.user).first()
+        if not member:
+            return False
+
+        return (obj.created_by == request.user or (obj.company == member.company and
+                        obj.locations.filter(location=member.location).exists()))
 
 
     def has_delete_permission(self, request, obj = None):
@@ -169,18 +186,17 @@ class JobAdmin(admin.ModelAdmin):
 
         return request.user == obj.created_by or obj.company.members.filter(user=request.user).exists()
 
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
 
         if request.user.is_superuser:
             return qs
 
-        company_member = CompanyMember.objects.filter(user=request.user).first()
-        if not company_member:
-            return qs.filter(company__members__user=request.user)
+        member = CompanyMember.objects.filter(user=request.user).first()
+        if not member:
+            return qs.none()
 
-        return qs
+        return qs.filter(company=member.company, locations__location=member.location).distinct()
 
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -215,7 +231,7 @@ class ApplicationAdmin(admin.ModelAdmin):
         if is_company_member:
             return qs.filter(job__company__members__user = request.user).distinct()
 
-        return qs.filter(cv__applicant = request.user)
+        return qs.filter(cv__user = request.user)
 
 
 
@@ -261,7 +277,7 @@ class SkillMatchAdmin(admin.ModelAdmin):
         if is_company_member:
             return qs.filter(application__job__company__members__user = request.user).distinct()
 
-        return qs.filter(application__cv__applicant = request.user)
+        return qs.filter(application__cv__user = request.user)
 
 
 

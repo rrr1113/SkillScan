@@ -55,7 +55,7 @@ def updating_status(sender, instance, *args, **kwargs):
             send_mail(
                 subject="Application Status changed",
                 message=(
-                    f"Hello {instance.application.cv.name_surname},\n\n"
+                    f"Hello {instance.application.cv.user.first_name} {instance.application.cv.user.last_name},\n\n"
                     f"Your application for the position "
                     f"'{instance.application.job.position}' at '{instance.application.job.company.name}' "
                     f"has been {application.status}."
@@ -95,7 +95,7 @@ def deleting_old_skill_matches(sender, instance, created, **kwargs):
             send_mail(
                 subject="Application Submitted",
                 message=(
-                    f"Hello {instance.cv.name_surname},\n\n"
+                    f"Hello {instance.cv.user.first_name} {instance.cv.user.last_name},\n\n"
                     f"Your application for the position "
                     f"'{instance.job.position}' at '{instance.job.company.name}' "
                     f"has been successfully submitted."

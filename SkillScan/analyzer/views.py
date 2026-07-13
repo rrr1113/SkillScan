@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 
 from .forms import EditJobForm
-from .models import Job, JobLocation, SkillJob, CompanyMember, Application
+from .models import Job, JobLocation, SkillJob, CompanyMember, Application, CV
 
 
 # Create your views here.
@@ -70,12 +70,55 @@ def job_details(request, id):
 
 @login_required
 def company_jobs_overview(request):
-    active_jobs = Job.objects.exclude(active_until__lte=now()).order_by('-created_at')
-    not_active_jobs = Job.objects.exclude(active_until__gt=now()).order_by('-created_at')
+    active_jobs = Job.objects.filter(company__members__user=request.user).exclude(active_until__lte=now()).distinct().order_by('-created_at')
+    not_active_jobs = Job.objects.filter(company__members__user=request.user).exclude(active_until__gt=now()).order_by('-created_at')
 
-    return render(request, 'company_jobs_overview.html', {'active_jobs' : active_jobs, 'not_active_jobs' : not_active_jobs})
+    position = request.GET.get('position')
+    location = request.GET.get('location')
+    work_type = request.GET.get('work_type')
+
+    if position:
+        active_jobs = active_jobs.filter(position__icontains=position)
+        not_active_jobs = not_active_jobs.filter(position__icontains=position)
+
+    if location:
+        active_jobs = active_jobs.filter(
+            Q(locations__location__city__icontains=location) | Q(locations__location__country__icontains=location))
+        not_active_jobs = not_active_jobs.filter(
+            Q(locations__location__city__icontains=location) | Q(locations__location__country__icontains=location))
+
+    if work_type:
+        active_jobs = active_jobs.filter(employment_type__icontains=work_type)
+        not_active_jobs = not_active_jobs.filter(employment_type__icontains=work_type)
+
+    active_job_data = []
+    for job in active_jobs:
+        location = JobLocation.objects.filter(job=job)
+        active_job_data.append({"locations": location, "job": job})
+
+    not_active_job_data = []
+    for job in not_active_jobs:
+        location = JobLocation.objects.filter(job=job)
+        not_active_job_data.append({"locations": location, "job": job})
+
+
+    return render(request, 'company_jobs_overview.html', {'active_jobs' : active_job_data, 'not_active_jobs' : not_active_job_data})
 
 
 @login_required
 def user_profile(request):
-    return render(request, 'user_profile.html',{'user': request.user,})
+    company_memberships = CompanyMember.objects.filter(user=request.user).order_by("-created_at")
+    is_owner = CompanyMember.objects.filter(user=request.user, role = 'owner').order_by("-created_at")
+    cvs = CV.objects.filter(user=request.user)
+
+    return render(request, 'user_profile.html', { 'user': request.user, 'companies': company_memberships,
+        'cvs': cvs, 'is_company_member': company_memberships.exists(), 'is_owner' : is_owner  })
+
+
+@login_required
+def user_applications_overview(request):
+    pending_applications = Application.objects.filter(cv__user=request.user, status='submitted')
+    under_review_applications = Application.objects.filter(cv__user=request.user, status='under_review')
+    rejected_applications = Application.objects.filter(cv__user=request.user, status='rejected')
+    return render(request, 'user_applications_overview.html',
+                  {'pending_applications' : pending_applications, 'under_review_applications' : under_review_applications, 'rejected_applications' : rejected_applications })
